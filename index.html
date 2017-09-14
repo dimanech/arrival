@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Document</title>
+	<style>
+		body {
+			margin: 0;
+		}
+		
+		.box {
+			width: 300px;
+			height: 300px;
+			margin: 20px auto;
+			background-color: #eee;
+		}
+		
+		section {
+			background-color: #ccc;
+			overflow: hidden; /* just prevent from margin collapse */
+			will-change: background-color;
+		}
+		
+		div[data-change-translate] {
+			background-color: red;
+			will-change: opacity, transform;
+		}
+		
+		h2 {
+			color: #fff;
+			text-align: center;
+			line-height: 300px;
+			opacity: 0;
+			transition: opacity linear 0.6s;
+		}
+		
+		h2.is-arrived {
+			opacity: 1;
+		}
+	</style>
+</head>
+<body>
+	
+	<div class="box"></div>
+	<div class="box"></div>
+	
+	<section data-arrival data-change-color>
+		<div data-arrival data-change-translate class="box">
+			<h2 data-arrival data-change-class>Some title</h2>
+		</div>
+	</section>
+	<section data-arrival data-change-color>
+		<div data-arrival data-change-translate class="box">
+			<h2 data-arrival data-change-class>Some title</h2>
+		</div>
+	</section>
+	<section data-arrival data-change-color>
+		<div data-arrival data-change-translate class="box">
+			<h2 data-arrival data-change-class>Some title</h2>
+		</div>
+	</section>
+	<section data-arrival data-change-color>
+		<div data-arrival data-change-translate class="box">
+			<h2 data-arrival data-change-class>Some title</h2>
+		</div>
+	</section>
+	<section data-arrival data-change-color>
+		<div data-arrival data-change-translate class="box">
+			<h2 data-arrival data-change-class>Some title</h2>
+		</div>
+	</section>
+	
+	<div class="box"></div>
+	<div class="box"></div>
+	<div class="box"></div>
+	<div class="box"></div>
+	
+	<script src="arrival.js"></script>
+</body>
+</html>
