@@ -1,4 +1,4 @@
-# Arrival component
+# Arrival
 
 Zero dependency plugin with declarative interface to set classes or apply some styles on elements depending on scroll position.
 
