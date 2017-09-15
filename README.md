@@ -1,4 +1,4 @@
-# Arrival component
+# Arrival
 
 Zero dependency plugin with declarative interface to set classes or apply some styles on elements depending on scroll position.
 
@@ -10,7 +10,7 @@ This component designed to include in project not just copy-past. In example we 
 * change `background-color`
 * change `transform` and `opacity` properties
 
-It is hard to believe that all this needed to real project, so feel free to leave only what you need.
+It is hard to believe that all this needed to real project, so feel free to keep only what you need.
 
 For this example you could instantiate component like this:
 
