@@ -2,6 +2,8 @@
 
 /**
  * Arrival component
+ * Copyright © 2017, Dima Nechepurenko <dimanechepurenko@gmail.com>
+ * Published under MIT license.
  *
  * @param {int} 'data-start' - start point percent. "0" - viewport top, "100" - viewport bottom
  * @param {int} 'data-distance' - distance for arrival in percentage of viewport
@@ -38,7 +40,7 @@ class Arrival {
 	};
 
 	arrivalPercent(relativeScrollTop) {
-		let scrollPercent = relativeScrollTop / (this.arrivalDistance / 100);
+		const scrollPercent = relativeScrollTop / (this.arrivalDistance / 100);
 		return scrollPercent > 100 ? 100 : Math.round(scrollPercent);
 	};
 
