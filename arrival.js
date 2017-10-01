@@ -1,9 +1,11 @@
 'use strict';
 
 /**
- * Arrival component
+ * Arrival
  * Copyright © 2017, Dima Nechepurenko <dimanechepurenko@gmail.com>
  * Published under MIT license.
+ *
+ * Apply any CSS styles or attributes depending on scroll interaction
  *
  * @param {int} 'data-start' - start point percent. "0" - viewport top, "100" - viewport bottom
  * @param {int} 'data-distance' - distance for arrival in percentage of viewport
@@ -95,6 +97,17 @@ class ArrivalClass extends Arrival {
 	};
 }
 
+class ArrivalParallax extends Arrival {
+	applyStyles(relativeScrollTop) {
+		const elem = this.element;
+		const transform = (100 - this.arrivalPercent(relativeScrollTop)) / 2;
+
+		window.requestAnimationFrame(() => {
+			elem.style.transform = 'translateY(' + transform + 'px)';
+		});
+	};
+}
+
 document.querySelectorAll('[data-arrival]').forEach(function (inst) {
 	if (inst.hasAttribute('data-change-translate')) {
 		new ArrivalFadeTranslate({
@@ -115,6 +128,13 @@ document.querySelectorAll('[data-arrival]').forEach(function (inst) {
 			instance: inst,
 			start: inst.getAttribute('data-start') || 50,
 			distance: inst.getAttribute('data-distance') || 0,
+			elementBound: inst.getBoundingClientRect().top + Arrival.scrollTop()
+		});
+	} else if (inst.hasAttribute('data-parallax')) {
+		new ArrivalParallax({
+			instance: inst,
+			start: inst.getAttribute('data-start') || 0,
+			distance: inst.getAttribute('data-distance') || 100,
 			elementBound: inst.getBoundingClientRect().top + Arrival.scrollTop()
 		});
 	}

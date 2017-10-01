@@ -39,6 +39,25 @@
 		h2.is-arrived {
 			opacity: 1;
 		}
+		
+		.parallax-container {
+			position: relative;
+			padding-bottom: 46%;
+			display: block;
+			background-color: #eee;
+			overflow: hidden;
+			margin: 0 0 20px;
+		}
+		
+		.parallax-container__bg {
+			position: absolute;
+			top: -100px;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			width: 100%;
+			will-change: tranform;
+		}
 	</style>
 </head>
 <body>
@@ -71,6 +90,12 @@
 			<h2 data-arrival data-change-class>Some title</h2>
 		</div>
 	</section>
+	
+	<picture class="parallax-container">
+		<source media="(max-width: 768px)" srcset="images/bg-sm.png" />
+		<source media="(max-width: 1024px)" srcset="images/bg-md.png" />
+		<img data-arrival data-parallax class="parallax-container__bg" src="images/bg.png" />
+	</picture>
 	
 	<div class="box"></div>
 	<div class="box"></div>
