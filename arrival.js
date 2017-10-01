@@ -98,13 +98,48 @@ class ArrivalClass extends Arrival {
 }
 
 class ArrivalParallax extends Arrival {
+	constructor(options) {
+		super(options);
+		this.beta = 0;
+		this.gamma = 0;
+	}
+
+	onDeviceOrientationChange(event) {
+		let beta;
+		let gamma;
+
+		if (window.innerHeight > window.innerWidth) {
+			beta = Math.round(event.gamma / 6);
+			gamma = Math.round(event.beta / 4);
+		} else {
+			beta = Math.round(event.beta / 6);
+			gamma = Math.round(event.gamma / 4);
+		}
+
+		this.beta = beta;
+		this.gamma = gamma;
+		this.processArrival();
+	};
+
 	applyStyles(relativeScrollTop) {
-		const elem = this.element;
-		const transform = (100 - this.arrivalPercent(relativeScrollTop)) / 2;
+		const y = (100 - this.arrivalPercent(relativeScrollTop)) / 2;
+		const transformX = this.beta > 10 ? 10 : this.beta;
+		const transformY = (y - this.gamma) < 0 ? 0 : (y - this.gamma); // limit gamma to not transform layer more then bottom point
 
 		window.requestAnimationFrame(() => {
-			elem.style.transform = 'translateY(' + transform + 'px)';
+			this.element.style.transform = 'translate(' + transformX + 'px, ' + transformY + 'px)';
 		});
+	};
+
+	initializeEvents() {
+		window.addEventListener('orientationchange', this.initializeParams.bind(this));
+		window.addEventListener('resize', this.initializeParams.bind(this));
+		window.addEventListener('scroll', this.processArrival.bind(this), {passive: true});
+		window.addEventListener('touchstart', this.processArrival.bind(this), {passive: true});
+
+		if (window.DeviceOrientationEvent) {
+			window.addEventListener('deviceorientation', this.onDeviceOrientationChange.bind(this));
+		}
 	};
 }
 
