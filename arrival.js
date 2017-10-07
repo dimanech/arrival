@@ -2,175 +2,335 @@
 
 /**
  * Arrival
- * Copyright © 2017, Dima Nechepurenko <dimanechepurenko@gmail.com>
+ * Copyright © 2017, D.Nechepurenko <dimanechepurenko@gmail.com>
  * Published under MIT license.
  *
  * Apply any CSS styles or attributes depending on scroll interaction
  *
- * @param {int} 'data-start' - start point percent. "0" - viewport top, "100" - viewport bottom
- * @param {int} 'data-distance' - distance for arrival in percentage of viewport
+ * @param {int} 'data-start' - start point percent. "0" - viewport bottom, "100" - viewport top
+ * @param {int} 'data-stop' - stop point percent. "0" - viewport bottom, "100" - viewport top
  * @example
- *    <node data-arrival data-distance="20" data-start="100"></node>
+ *    <node data-arrival data-start="0" data-stop="20"></node>
  */
 
 /**
  * @constructor
  * @param {object} options - instance options
- * @param {object} options.instance - DOM-node that will be animated
- * @param {int} options.start - percent of the screen that is the point of start
- * @param {int} options.distance - percent of the screen that arrival should process
- * @param {int} options.elementBound - top or bottom coordinat of element
+ * @param {object} options.instance - DOM-node on what styles would be applied
+ * @param {int} options.start - point of start in the screen percentages. 0 - view bottom, 100% - view top
+ * @param {int} options.stop - point of stop in the screen percentages. 0 - view bottom, 100% - view top
+ * @param {int} options.applicableChange - unit distance that should be processed. For most CSS values it is 100, for distances it could be any distance.
  */
-class Arrival {
-	constructor(options) {
-		this.element = options.instance;
-		this.start = options.start;
-		this.distance = options.distance;
-		this.elementBound = options.elementBound;
-		this.viewPortHeight;
-		this.arrivalDistance;
-		this.arrivalStart;
+var Arrival = function (options) {
+	this.element = options.instance;
+	this.start = options.start;
+	this.stop = options.stop;
+	this.applicableChange = options.applicableChange || 100;
+	this.viewHeight;
+	this.arrivalStart;
+	this.arrivalDistance;
 
-		this.initializeParams();
-		this.processArrival();
-		this.initializeEvents();
+	this.initializeParams();
+	this.initializeEvents();
+	this.startArrival();
+};
+
+Arrival.prototype.scrollTop = function () {
+	return (document.documentElement && document.documentElement.scrollTop) ||
+		document.body.scrollTop;
+};
+
+Arrival.prototype.initializeParams = function () {
+	this.viewHeight = window.innerHeight;
+	this.arrivalStart = (this.viewHeight / 100) * this.start;
+	this.arrivalDistance = ((this.viewHeight / 100) * (this.stop - this.start));
+
+	return this;
+};
+
+Arrival.prototype.initializeEvents = function () {
+	window.addEventListener('resize', this.initializeParams.bind(this));
+	window.addEventListener('scroll', this.startArrival.bind(this));
+	window.addEventListener('touchstart', this.startArrival.bind(this));
+};
+
+Arrival.prototype.startArrival = function () {
+	var elementBounds = this.element.getBoundingClientRect();
+	var viewRelatedScroll = elementBounds.top - (this.viewHeight);
+
+	if (viewRelatedScroll > 0 || elementBounds.bottom < 0) {
+		return false;
+	}
+	// We apply styles for all visible elements before actual arrival starts to
+	// ensure that all rendered as expected and make time for browser to prepare
+	// elements. So in `applyStyle` we need to check if scrollY > 0
+	return this.applyStyles(Math.abs(viewRelatedScroll) - this.arrivalStart);
+};
+
+Arrival.prototype.arrivalProgress = function (relativeScrollTop) {
+	var scrollPercent = relativeScrollTop / (this.arrivalDistance / this.applicableChange);
+	// Maybe we should return raw values?
+	return scrollPercent > this.applicableChange ? this.applicableChange : Math.round(scrollPercent);
+};
+
+// Standard non-interactive arrival
+
+var ArrivalClass = function (options) {
+	Arrival.call(this, options);
+	this.isArrived = false;
+};
+
+ArrivalClass.prototype = Object.create(Arrival.prototype);
+
+ArrivalClass.prototype.applyStyles = function (scrollY) {
+	if (!this.isArrived && scrollY >= 0) {
+		this.element.classList.add('is-shown');
+		this.isArrived = true;
+	}
+};
+
+// Zoom in
+
+var ArrivalZoomIn = function (options) {
+	Arrival.call(this, options);
+	this.zoom = options.zoom;
+};
+
+ArrivalZoomIn.prototype = Object.create(Arrival.prototype);
+
+ArrivalZoomIn.prototype.applyStyles = function (scrollY) {
+	if (scrollY < 0) {
+		return false;
+	}
+	var easeInOutCubic = function (t) {
+		return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+	};
+	var elemStyle = this.element.style;
+	var progress = (this.zoom / 100) * (100 - this.arrivalProgress(scrollY));
+	var transform = 1 + easeInOutCubic(progress);
+
+	window.requestAnimationFrame(function () {
+		elemStyle.transform = 'scale(' + transform + ')';
+	});
+};
+
+// Zoom out
+
+var ArrivalZoomOut = function (options) {
+	Arrival.call(this, options);
+	this.zoom = options.zoom;
+};
+
+ArrivalZoomOut.prototype = Object.create(Arrival.prototype);
+
+ArrivalZoomOut.prototype.applyStyles = function (scrollY) {
+	var easeInOutCubic = function (t) {
+		return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+	};
+	var elemStyle = this.element.style;
+	var progress = (this.zoom / 100) * this.arrivalProgress(scrollY);
+	var transform = 1 + easeInOutCubic(progress);
+
+	window.requestAnimationFrame(function () {
+		elemStyle.transform = 'scale(' + transform + ')';
+	});
+};
+
+// Translate Fade
+
+var ArrivalTranslateFade = function (options) {
+	Arrival.call(this, options);
+};
+
+ArrivalTranslateFade.prototype = Object.create(Arrival.prototype);
+
+ArrivalTranslateFade.prototype.applyStyles = function (scrollY) {
+	var elemStyle = this.element.style;
+	var transform = this.applicableChange - this.arrivalProgress(scrollY);
+	var opacity = this.arrivalProgress(scrollY) / 100;
+
+	window.requestAnimationFrame(function () {
+		elemStyle.opacity = opacity;
+		elemStyle.transform = 'translateY(' + transform + 'px)';
+	});
+};
+
+// BgColor
+
+var ArrivalBgColor = function (options) {
+	Arrival.call(this, options);
+	this.isArrived = false;
+};
+
+ArrivalBgColor.prototype = Object.create(Arrival.prototype);
+
+ArrivalBgColor.prototype.applyStyles = function (scrollY) {
+	var elemStyle = this.element.style;
+	var alphaChannel = this.arrivalProgress(scrollY) / 100;
+
+	window.requestAnimationFrame(function () {
+		elemStyle.backgroundColor = "rgba(220, 220, 220," + alphaChannel + ")";
+	});
+};
+
+// Parallax motion based on arrival with gyroscope engaged
+
+var ArrivalParallax = function (options) {
+	Arrival.call(this, options);
+	this.beta = 0;
+	this.gamma = 0;
+	this.image = this.element.getElementsByTagName('img')[0];
+	this.scale = 1;
+
+	this.createHolder();
+	if (this.image.complete) {
+		this.updateHolder();
+	}
+	this.initializeAdditionalEvents();
+};
+
+ArrivalParallax.prototype = Object.create(Arrival.prototype);
+
+ArrivalParallax.prototype.onDeviceOrientationChange = function (event) {
+	var beta; // left-right
+	var gamma; // up-down
+
+	if (window.innerHeight > window.innerWidth) {
+		beta = Math.round(event.gamma / 20);
+		gamma = Math.round(event.beta / 10);
+	} else {
+		beta = Math.round(event.beta / 20);
+		gamma = Math.round(event.gamma / 10);
 	}
 
-	static scrollTop() {
-		return (document.documentElement && document.documentElement.scrollTop) ||
-			document.body.scrollTop;
+	this.beta = beta;
+	this.gamma = gamma;
+	this.startArrival();
+};
+
+ArrivalParallax.prototype.applyStyles = function (scrollY) {
+	// The parallax is the function that as argument accept not viewPort height,
+	// but scroll by itself. It is not related from screen size. But anyway this
+	// is usable addition to arrivals.
+	var self = this;
+	var y = scrollY * this.applicableChange;
+	var translateX = this.beta > 10 ? 10 : this.beta;
+	// limit gamma to not transform layer more then bottom point
+	var translateY = (y - this.gamma) < 0 ? 0 : (y - this.gamma);
+
+	window.requestAnimationFrame(function () {
+		self.image.style.cssText += ';transform:translate3d(' + translateX + 'px,' + translateY + 'px,0) scale(' + self.scale + ');';
+	});
+};
+
+ArrivalParallax.prototype.createHolder = function () {
+	this.element.appendChild(document.createElement('canvas'));
+};
+
+ArrivalParallax.prototype.updateHolder = function () {
+	var holder = this.element.getElementsByTagName('canvas')[0];
+	holder.width = this.image.naturalWidth;
+	holder.height = this.image.naturalHeight;
+	this.element.classList.add('js-parallax-loaded');
+	this.animateImage();
+};
+
+ArrivalParallax.prototype.initializeAdditionalEvents = function () {
+	this.image.addEventListener('load', this.updateHolder.bind(this));
+
+	//if (window.DeviceOrientationEvent) {
+	//    window.addEventListener('deviceorientation', this.onDeviceOrientationChange.bind(this));
+	//}
+};
+
+ArrivalParallax.prototype.animateImage = function () {
+	var self = this;
+	var time = {
+		start: performance.now(),
+		total: 6000
+	};
+	var easeInOutCubic = function (t) {
+		return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
 	};
 
-	arrivalPercent(relativeScrollTop) {
-		const scrollPercent = relativeScrollTop / (this.arrivalDistance / 100);
-		return scrollPercent > 100 ? 100 : Math.round(scrollPercent);
-	};
+	var tick = function (now) {
+		time.elapsed = now - time.start;
+		var progress = time.elapsed / time.total;
+		var progressInverse = 1 - progress;
+		var rawZoom = 1 + (0.3 * easeInOutCubic(progressInverse));
+		self.scale = rawZoom < 1 ? 1 : rawZoom;
+		self.startArrival();
 
-	processArrival() {
-		const relativeScrollTop = Arrival.scrollTop() - this.elementBound;
-		return this.applyStyles(relativeScrollTop + this.arrivalStart);
-	};
-
-	initializeParams() {
-		this.viewPortHeight = window.innerHeight;
-		this.arrivalDistance = (this.viewPortHeight / 100) * this.distance;
-		this.arrivalStart = (this.viewPortHeight / 100) * this.start;
-
-		return this;
-	};
-
-	initializeEvents() {
-		window.addEventListener('orientationchange', this.initializeParams.bind(this));
-		window.addEventListener('resize', this.initializeParams.bind(this));
-		document.addEventListener('scroll', this.processArrival.bind(this));
-	};
-}
-
-class ArrivalColor extends Arrival {
-	applyStyles(relativeScrollTop) {
-		const alphaChannel = this.arrivalPercent(relativeScrollTop) / 100;
-
-		window.requestAnimationFrame(() => {
-			this.element.style.backgroundColor = "rgba(220, 220, 220," + alphaChannel + ")";
-		});
-	};
-}
-
-class ArrivalFadeTranslate extends Arrival {
-	applyStyles(relativeScrollTop) {
-		const elem = this.element;
-		const transform = (100 - this.arrivalPercent(relativeScrollTop)) / 2;
-		const opacity = this.arrivalPercent(relativeScrollTop) / 100;
-
-		window.requestAnimationFrame(() => {
-			elem.style.opacity = opacity;
-			elem.style.transform = 'translateY(' + transform + 'px)';
-		});
-	};
-}
-
-class ArrivalClass extends Arrival {
-	applyStyles(relativeScrollTop) {
-		if (relativeScrollTop >= 0) {
-			this.element.classList.add('is-arrived');
+		if (progress < 1) {
+			window.requestAnimationFrame(tick);
 		}
 	};
-}
 
-class ArrivalParallax extends Arrival {
-	constructor(options) {
-		super(options);
-		this.beta = 0;
-		this.gamma = 0;
+	window.requestAnimationFrame(tick);
+};
+
+// Create instances
+
+function initArrivals() {
+	var page = document;
+	var arrivals = page.querySelectorAll('[data-arrival]');
+	var parallaxes = page.querySelectorAll('picture[data-parallax]');
+
+	if (arrivals.length) {
+		page.documentElement.classList.add('js-arrival-enabled');
 	}
 
-	onDeviceOrientationChange(event) {
-		let beta;
-		let gamma;
+	for (var arrival = 0; arrival < arrivals.length; arrival++) {
+		var instance = arrivals[arrival];
 
-		if (window.innerHeight > window.innerWidth) {
-			beta = Math.round(event.gamma / 6);
-			gamma = Math.round(event.beta / 4);
-		} else {
-			beta = Math.round(event.beta / 6);
-			gamma = Math.round(event.gamma / 4);
+		if (instance.hasAttribute('data-change-translate')) {
+			new ArrivalTranslateFade({
+				instance: instance,
+				start: instance.getAttribute('data-start') || 0,
+				stop: instance.getAttribute('data-stop') || 35
+			});
+		} else if (instance.hasAttribute('data-change-color')) {
+			new ArrivalBgColor({
+				instance: instance,
+				start: instance.getAttribute('data-start') || 100,
+				stop: instance.getAttribute('data-stop') || 120
+			});
+		} else if (instance.hasAttribute('data-change-class')) {
+			new ArrivalClass({
+				instance: instance,
+				start: instance.getAttribute('data-start') || 50,
+				stop: instance.getAttribute('data-stop') || 50
+			});
+		} else if (instance.hasAttribute('data-change-zoomIn')) {
+			new ArrivalZoomIn({
+				instance: instance,
+				start: instance.getAttribute('data-start') || 0,
+				stop: instance.getAttribute('data-stop') || 80,
+				zoom: instance.getAttribute('data-zoom') || 0.4
+			});
+		} else if (instance.hasAttribute('data-change-zoomOut')) {
+			new ArrivalZoomOut({
+				instance: instance,
+				start: instance.getAttribute('data-start') || 0,
+				stop: instance.getAttribute('data-stop') || 80,
+				zoom: instance.getAttribute('data-zoom') || 0.2
+			});
 		}
+	}
 
-		this.beta = beta;
-		this.gamma = gamma;
-		this.processArrival();
-	};
+	if (parallaxes.length) {
+		page.documentElement.classList.add('js-parallax-enabled');
+	}
 
-	applyStyles(relativeScrollTop) {
-		const y = (100 - this.arrivalPercent(relativeScrollTop)) / 2;
-		const transformX = this.beta > 10 ? 10 : this.beta;
-		const transformY = (y - this.gamma) < 0 ? 0 : (y - this.gamma); // limit gamma to not transform layer more then bottom point
-
-		window.requestAnimationFrame(() => {
-			this.element.style.transform = 'translate(' + transformX + 'px, ' + transformY + 'px)';
-		});
-	};
-
-	initializeEvents() {
-		window.addEventListener('orientationchange', this.initializeParams.bind(this));
-		window.addEventListener('resize', this.initializeParams.bind(this));
-		window.addEventListener('scroll', this.processArrival.bind(this), {passive: true});
-		window.addEventListener('touchstart', this.processArrival.bind(this), {passive: true});
-
-		if (window.DeviceOrientationEvent) {
-			window.addEventListener('deviceorientation', this.onDeviceOrientationChange.bind(this));
-		}
-	};
-}
-
-document.querySelectorAll('[data-arrival]').forEach(function (inst) {
-	if (inst.hasAttribute('data-change-translate')) {
-		new ArrivalFadeTranslate({
-			instance: inst,
-			start: inst.getAttribute('data-start') || 100,
-			distance: inst.getAttribute('data-distance') || 30,
-			elementBound: inst.getBoundingClientRect().top + Arrival.scrollTop()
-		});
-	} else if (inst.hasAttribute('data-change-color')) {
-		new ArrivalColor({
-			instance: inst,
-			start: inst.getAttribute('data-start') || 20,
-			distance: inst.getAttribute('data-distance') || 20,
-			elementBound: inst.getBoundingClientRect().bottom + Arrival.scrollTop()
-		});
-	} else if (inst.hasAttribute('data-change-class')) {
-		new ArrivalClass({
-			instance: inst,
-			start: inst.getAttribute('data-start') || 50,
-			distance: inst.getAttribute('data-distance') || 0,
-			elementBound: inst.getBoundingClientRect().top + Arrival.scrollTop()
-		});
-	} else if (inst.hasAttribute('data-parallax')) {
+	for (var parallax = 0; parallax < parallaxes.length; parallax++) {
+		var inst = parallaxes[parallax];
 		new ArrivalParallax({
 			instance: inst,
 			start: inst.getAttribute('data-start') || 0,
-			distance: inst.getAttribute('data-distance') || 100,
-			elementBound: inst.getBoundingClientRect().top + Arrival.scrollTop()
+			stop: inst.getAttribute('data-stop') || 100,
+			applicableChange: inst.getAttribute('data-depth') || 0.1
 		});
 	}
-});
+}
+
+initArrivals();
