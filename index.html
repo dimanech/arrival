@@ -81,8 +81,10 @@
 		
 		.box-zoomed {
 			position: relative;
-			padding-bottom: 56.25%;
+			padding-bottom: 40%;
 			overflow: hidden;
+			max-width: 1200px;
+			margin: 0 auto;
 		}
 		
 		.box-zoomed img {
@@ -132,28 +134,18 @@
 	
 	<picture data-parallax>
 		<source media="(max-width: 768px)" srcset="images/bg-sm.png"/>
-		<source media="(max-width: 1024px)" srcset="images/bg-md.png"/>
-		<img src="images/bg-large.jpg" />
+		<source media="(max-width: 1024px)" srcset="images/bg-md.jpg"/>
+		<img src="images/bg-lg-2.jpg"/>
 	</picture>
 	
 	<div class="box"></div>
 	
 	<div class="box-zoomed">
-		<img data-arrival data-change-zoomOut src="images/bg.png"/>
+		<img data-arrival data-change-zoomOut src="images/zoom-in.jpg"/>
 	</div>
 	
-	<div class="box"></div>
-	
-	<picture data-parallax>
-		<source media="(max-width: 768px)" srcset="images/bg-sm.png"/>
-		<source media="(max-width: 1024px)" srcset="images/bg-md.png"/>
-		<img src="http://i1.adis.ws/i/Fat_Face/1822_home_1_Template_1_Large?fmt.options=interlaced&fmt=jpg&h=745&w=1440&qlt=75"/>
-	</picture>
-	
-	<div class="box"></div>
-	
 	<div class="box-zoomed">
-		<img data-arrival data-change-zoomIn src="images/bg.png"/>
+		<img data-arrival data-change-zoomIn src="images/zoom-out.jpg"/>
 	</div>
 	
 	<div class="box"></div>
