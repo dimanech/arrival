@@ -176,11 +176,11 @@ ArrivalBgColor.prototype.applyStyles = function (scrollY) {
 // Parallax motion based on arrival with gyroscope engaged
 
 var ArrivalParallax = function (options) {
-	Arrival.call(this, options);
 	this.beta = 0;
 	this.gamma = 0;
-	this.image = this.element.getElementsByTagName('img')[0];
 	this.scale = 1;
+	Arrival.call(this, options);
+	this.image = this.element.getElementsByTagName('img')[0];
 
 	this.createHolder();
 	if (this.image.complete) {
@@ -192,20 +192,34 @@ var ArrivalParallax = function (options) {
 ArrivalParallax.prototype = Object.create(Arrival.prototype);
 
 ArrivalParallax.prototype.onDeviceOrientationChange = function (event) {
-	var beta; // left-right
-	var gamma; // up-down
+	var self = this;
+	var isLandscape = window.innerHeight > window.innerWidth;
 
-	if (window.innerHeight > window.innerWidth) {
-		beta = Math.round(event.gamma / 20);
-		gamma = Math.round(event.beta / 10);
-	} else {
-		beta = Math.round(event.beta / 20);
-		gamma = Math.round(event.gamma / 10);
+	var rawBeta = event.beta;
+	if (rawBeta > 90) {
+		rawBeta = 90;
+	}
+	if (rawBeta < -90) {
+		rawBeta = -90;
 	}
 
-	this.beta = beta;
-	this.gamma = gamma;
-	this.startArrival();
+	var uGamma = -event.gamma / 8;
+	var uBeta = rawBeta / 8;
+
+	if (isLandscape) {
+		uGamma = rawBeta / 8;
+		uBeta = -event.gamma / 8;
+	}
+
+	if (this.isAnimating) {
+		return false;
+	}
+
+	setTimeout(function () {
+		self.beta += uBeta - self.beta;
+		self.gamma += uGamma - self.gamma;
+		self.startArrival();
+	}, 50);
 };
 
 ArrivalParallax.prototype.applyStyles = function (scrollY) {
@@ -214,7 +228,13 @@ ArrivalParallax.prototype.applyStyles = function (scrollY) {
 	// is usable addition to arrivals.
 	var self = this;
 	var y = scrollY * this.applicableChange;
-	var translateX = this.beta > 10 ? 10 : this.beta;
+	var translateX = this.beta;
+	if (translateX > 10) {
+		translateX = 10;
+	}
+	if (translateX < -10) {
+		translateX = -10;
+	}
 	// limit gamma to not transform layer more then bottom point
 	var translateY = (y - this.gamma) < 0 ? 0 : (y - this.gamma);
 
@@ -238,9 +258,9 @@ ArrivalParallax.prototype.updateHolder = function () {
 ArrivalParallax.prototype.initializeAdditionalEvents = function () {
 	this.image.addEventListener('load', this.updateHolder.bind(this));
 
-	//if (window.DeviceOrientationEvent) {
-	//    window.addEventListener('deviceorientation', this.onDeviceOrientationChange.bind(this));
-	//}
+	if (window.DeviceOrientationEvent) {
+	    window.addEventListener('deviceorientation', this.onDeviceOrientationChange.bind(this));
+	}
 };
 
 ArrivalParallax.prototype.animateImage = function () {
