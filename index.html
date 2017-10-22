@@ -42,39 +42,29 @@
 		/* Parallax */
 		
 		picture[data-parallax] {
-			background-color: #ccc;
 			display: block;
 			height: 100%;
 			overflow: hidden;
 			position: relative;
-			padding-bottom: 56.25%;
 		}
 		
 		picture[data-parallax] img {
-			bottom: 0;
+			display: block;
+			width: 100%;
+			height: auto;
+		}
+		
+		picture[data-parallax] span {
+			background-position: center center;
+			background-repeat: no-repeat;
+			background-size: cover;
+			display: block;
 			height: calc(100% + 100px);
 			left: -10px;
-			max-width: initial;
-			object-fit: cover;
 			position: absolute;
-			right: -10px;
 			top: -100px;
-			width: calc(100% + 20px) !important;
-			will-change: tranform;
-		}
-		
-		picture[data-parallax] canvas {
-			height: auto;
-			width: 100%;
-		}
-		
-		picture[data-parallax].js-parallax-loaded {
-			background: none;
-			padding-bottom: 0;
-		}
-		
-		picture[data-parallax].js-parallax-loaded img {
-			display: block;
+			width: calc(100% + 20px);
+			will-change: transform;
 		}
 		
 		/* Zoom */
@@ -98,6 +88,28 @@
 			object-fit: cover;
 			will-change: tranform;
 		}
+		
+		.js-parallax {
+			background-color: #ccc;
+			display: block;
+			overflow: hidden;
+			position: relative;
+			padding-bottom: 56.25%;
+		}
+		
+		.js-parallax span {
+			height: calc(100% + 100px);
+			left: 0;
+			position: absolute;
+			bottom: 0;
+			width: 100%;
+			background-size: cover;
+			background-position: center center;
+			background-repeat: no-repeat;
+			display: block;
+			will-change: transform;
+		}
+		
 
 	</style>
 </head>

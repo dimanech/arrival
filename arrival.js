@@ -176,11 +176,9 @@ ArrivalBgColor.prototype.applyStyles = function (scrollY) {
 // Parallax motion based on arrival with gyroscope engaged
 
 var ArrivalParallax = function (options) {
-	this.beta = 0;
-	this.gamma = 0;
-	this.scale = 1;
 	Arrival.call(this, options);
 	this.image = this.element.getElementsByTagName('img')[0];
+	this.layer = document.createElement('span');
 
 	this.createHolder();
 	if (this.image.complete) {
@@ -191,102 +189,27 @@ var ArrivalParallax = function (options) {
 
 ArrivalParallax.prototype = Object.create(Arrival.prototype);
 
-ArrivalParallax.prototype.onDeviceOrientationChange = function (event) {
-	var self = this;
-	var isLandscape = window.innerHeight > window.innerWidth;
-
-	var rawBeta = event.beta;
-	if (rawBeta > 90) {
-		rawBeta = 90;
-	}
-	if (rawBeta < -90) {
-		rawBeta = -90;
-	}
-
-	var uGamma = -event.gamma / 8;
-	var uBeta = rawBeta / 8;
-
-	if (isLandscape) {
-		uGamma = rawBeta / 8;
-		uBeta = -event.gamma / 8;
-	}
-
-	if (this.isAnimating) {
-		return false;
-	}
-
-	setTimeout(function () {
-		self.beta += uBeta - self.beta;
-		self.gamma += uGamma - self.gamma;
-		self.startArrival();
-	}, 50);
-};
-
 ArrivalParallax.prototype.applyStyles = function (scrollY) {
-	// The parallax is the function that as argument accept not viewPort height,
-	// but scroll by itself. It is not related from screen size. But anyway this
-	// is usable addition to arrivals.
 	var self = this;
 	var y = scrollY * this.applicableChange;
-	var translateX = this.beta;
-	if (translateX > 10) {
-		translateX = 10;
-	}
-	if (translateX < -10) {
-		translateX = -10;
-	}
-	// limit gamma to not transform layer more then bottom point
-	var translateY = (y - this.gamma) < 0 ? 0 : (y - this.gamma);
 
 	window.requestAnimationFrame(function () {
-		self.image.style.cssText += ';transform:translate3d(' + translateX + 'px,' + translateY + 'px,0) scale(' + self.scale + ');';
+		self.layer.style.transform = 'translate3d(0px,' + y + 'px, 0)';
 	});
 };
 
 ArrivalParallax.prototype.createHolder = function () {
-	this.element.appendChild(document.createElement('canvas'));
+	this.element.appendChild(this.layer);
 };
 
 ArrivalParallax.prototype.updateHolder = function () {
-	var holder = this.element.getElementsByTagName('canvas')[0];
-	holder.width = this.image.naturalWidth;
-	holder.height = this.image.naturalHeight;
+	var imageSrc = this.image.currentSrc || this.image.src;
+	this.layer.style.backgroundImage = 'url("' + imageSrc + '")';
 	this.element.classList.add('js-parallax-loaded');
-	this.animateImage();
 };
 
 ArrivalParallax.prototype.initializeAdditionalEvents = function () {
 	this.image.addEventListener('load', this.updateHolder.bind(this));
-
-	if (window.DeviceOrientationEvent) {
-	    window.addEventListener('deviceorientation', this.onDeviceOrientationChange.bind(this));
-	}
-};
-
-ArrivalParallax.prototype.animateImage = function () {
-	var self = this;
-	var time = {
-		start: performance.now(),
-		total: 6000
-	};
-	var easeInOutCubic = function (t) {
-		return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
-	};
-
-	var tick = function (now) {
-		time.elapsed = now - time.start;
-		var progress = time.elapsed / time.total;
-		var progressInverse = 1 - progress;
-		var rawZoom = 1 + (0.3 * easeInOutCubic(progressInverse));
-		self.scale = rawZoom < 1 ? 1 : rawZoom;
-		self.startArrival();
-
-		if (progress < 1) {
-			window.requestAnimationFrame(tick);
-		}
-	};
-
-	window.requestAnimationFrame(tick);
 };
 
 // Create instances
