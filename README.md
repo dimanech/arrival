@@ -34,6 +34,6 @@ You can declarative set configuration for particular instance if needed. Ex:
 * `data-distance` - the distance that effect will be applicable in percentage of viewport 
 * `data-start` - start point of effect. 0 - viewport top, 100 - viewport bottom 
 
-Supports: IE9+ (with Babel), Evergreen browsers.
+Supports: IE9+, Evergreen browsers.
 
 Copyright © 2017, Dima Nechepurenko. Published under MIT license.
